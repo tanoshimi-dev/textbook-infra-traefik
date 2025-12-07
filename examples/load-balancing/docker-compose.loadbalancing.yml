@@ -1,0 +1,139 @@
+version: '3.8'
+
+# Load Balancing Example
+# This demonstrates various load balancing scenarios
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--metrics.prometheus=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Flask app - Will be scaled to multiple instances
+  flask-app:
+    build: ../../app1-flask
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
+      - "traefik.http.routers.flask.entrypoints=web"
+
+      # Load balancer configuration
+      - "traefik.http.services.flask.loadbalancer.server.port=5000"
+
+      # Health check
+      - "traefik.http.services.flask.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.flask.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.flask.loadbalancer.healthcheck.timeout=3s"
+
+      # Sticky sessions (optional - uncomment if needed)
+      # - "traefik.http.services.flask.loadbalancer.sticky.cookie=true"
+      # - "traefik.http.services.flask.loadbalancer.sticky.cookie.name=flask_session"
+
+    networks:
+      - traefik-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    # Scale this service with: docker-compose up -d --scale flask-app=3
+
+  # Node.js app - Weighted load balancing example
+  # Instance 1 with weight 2
+  nodejs-app-1:
+    build: ../../app2-nodejs
+    container_name: nodejs-app-1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodejs.rule=Host(`nodejs.localhost`)"
+      - "traefik.http.routers.nodejs.entrypoints=web"
+      - "traefik.http.services.nodejs.loadbalancer.server.port=3000"
+      - "traefik.http.services.nodejs.loadbalancer.server.weight=2"
+      # Health check
+      - "traefik.http.services.nodejs.loadbalancer.healthcheck.path=/health"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Instance 2 with weight 1 (receives less traffic)
+  nodejs-app-2:
+    build: ../../app2-nodejs
+    container_name: nodejs-app-2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodejs.rule=Host(`nodejs.localhost`)"
+      - "traefik.http.routers.nodejs.entrypoints=web"
+      - "traefik.http.services.nodejs.loadbalancer.server.port=3000"
+      - "traefik.http.services.nodejs.loadbalancer.server.weight=1"
+      # Health check
+      - "traefik.http.services.nodejs.loadbalancer.healthcheck.path=/health"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Static app with sticky sessions
+  static-app-1:
+    build: ../../app3-static
+    container_name: static-app-1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.static.rule=Host(`static.localhost`)"
+      - "traefik.http.routers.static.entrypoints=web"
+      - "traefik.http.services.static.loadbalancer.server.port=80"
+      # Enable sticky sessions
+      - "traefik.http.services.static.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.static.loadbalancer.sticky.cookie.name=server_id"
+      - "traefik.http.services.static.loadbalancer.sticky.cookie.secure=false"
+      - "traefik.http.services.static.loadbalancer.sticky.cookie.httpOnly=true"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  static-app-2:
+    build: ../../app3-static
+    container_name: static-app-2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.static.rule=Host(`static.localhost`)"
+      - "traefik.http.routers.static.entrypoints=web"
+      - "traefik.http.services.static.loadbalancer.server.port=80"
+      # Same sticky session config
+      - "traefik.http.services.static.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.static.loadbalancer.sticky.cookie.name=server_id"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  static-app-3:
+    build: ../../app3-static
+    container_name: static-app-3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.static.rule=Host(`static.localhost`)"
+      - "traefik.http.routers.static.entrypoints=web"
+      - "traefik.http.services.static.loadbalancer.server.port=80"
+      # Same sticky session config
+      - "traefik.http.services.static.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.static.loadbalancer.sticky.cookie.name=server_id"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+networks:
+  traefik-network:
+    driver: bridge

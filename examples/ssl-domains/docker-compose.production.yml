@@ -1,0 +1,117 @@
+version: '3.8'
+
+# Production setup with SSL and multiple domains
+# Replace example.com with your actual domain
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.production.yml:/etc/traefik/traefik.yml:ro
+      - ./letsencrypt:/letsencrypt
+    environment:
+      # For Cloudflare DNS challenge (if using wildcard certs)
+      # - CF_API_EMAIL=${CF_API_EMAIL}
+      # - CF_API_KEY=${CF_API_KEY}
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Flask API on api.example.com
+  flask-app:
+    build: ../../app1-flask
+    container_name: flask-app
+    labels:
+      - "traefik.enable=true"
+      # Main domain
+      - "traefik.http.routers.flask.rule=Host(`api.example.com`)"
+      - "traefik.http.routers.flask.entrypoints=websecure"
+      - "traefik.http.routers.flask.tls=true"
+      - "traefik.http.routers.flask.tls.certresolver=letsencrypt"
+      - "traefik.http.services.flask.loadbalancer.server.port=5000"
+      # Health check
+      - "traefik.http.services.flask.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.flask.loadbalancer.healthcheck.interval=10s"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Node.js app on shop.example.com
+  nodejs-app:
+    build: ../../app2-nodejs
+    container_name: nodejs-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodejs.rule=Host(`shop.example.com`)"
+      - "traefik.http.routers.nodejs.entrypoints=websecure"
+      - "traefik.http.routers.nodejs.tls=true"
+      - "traefik.http.routers.nodejs.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nodejs.loadbalancer.server.port=3000"
+      # Health check
+      - "traefik.http.services.nodejs.loadbalancer.healthcheck.path=/health"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Static site on www.example.com and example.com
+  static-app:
+    build: ../../app3-static
+    container_name: static-app
+    labels:
+      - "traefik.enable=true"
+      # Multiple domains (www and non-www)
+      - "traefik.http.routers.static.rule=Host(`www.example.com`) || Host(`example.com`)"
+      - "traefik.http.routers.static.entrypoints=websecure"
+      - "traefik.http.routers.static.tls=true"
+      - "traefik.http.routers.static.tls.certresolver=letsencrypt"
+      - "traefik.http.services.static.loadbalancer.server.port=80"
+      # Redirect www to non-www (optional)
+      # - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      # - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://$${1}"
+      # - "traefik.http.routers.static.middlewares=www-redirect"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Blog on blog.example.com
+  blog-app:
+    build: ../../app3-static  # Use your actual blog app
+    container_name: blog-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blog.rule=Host(`blog.example.com`)"
+      - "traefik.http.routers.blog.entrypoints=websecure"
+      - "traefik.http.routers.blog.tls=true"
+      - "traefik.http.routers.blog.tls.certresolver=letsencrypt"
+      - "traefik.http.services.blog.loadbalancer.server.port=80"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Admin panel on admin.example.com (with basic auth)
+  admin-app:
+    build: ../../app2-nodejs  # Use your actual admin app
+    container_name: admin-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`admin.example.com`)"
+      - "traefik.http.routers.admin.entrypoints=websecure"
+      - "traefik.http.routers.admin.tls=true"
+      - "traefik.http.routers.admin.tls.certresolver=letsencrypt"
+      # Basic Auth middleware
+      - "traefik.http.middlewares.admin-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
+      - "traefik.http.routers.admin.middlewares=admin-auth"
+      - "traefik.http.services.admin.loadbalancer.server.port=3000"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+networks:
+  traefik-network:
+    driver: bridge

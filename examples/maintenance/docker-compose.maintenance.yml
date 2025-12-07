@@ -1,0 +1,68 @@
+version: '3.8'
+
+# Example: Maintenance mode with health checks
+# This shows how to update apps with zero downtime
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+  # Flask app with health checks
+  flask-app:
+    build: ../../app1-flask
+    container_name: flask-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
+      - "traefik.http.routers.flask.entrypoints=web"
+      - "traefik.http.services.flask.loadbalancer.server.port=5000"
+      # Health check configuration
+      - "traefik.http.services.flask.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.flask.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.flask.loadbalancer.healthcheck.timeout=3s"
+    networks:
+      - traefik-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # New version (disabled by default)
+  # Enable this when you want to test new version
+  flask-app-new:
+    build: ../../app1-flask
+    container_name: flask-app-new
+    labels:
+      - "traefik.enable=false"  # Change to true when ready to switch
+      - "traefik.http.routers.flask-new.rule=Host(`flask-new.localhost`)"
+      - "traefik.http.routers.flask-new.entrypoints=web"
+      - "traefik.http.services.flask-new.loadbalancer.server.port=5000"
+    networks:
+      - traefik-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  traefik-network:
+    driver: bridge

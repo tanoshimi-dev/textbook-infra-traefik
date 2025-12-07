@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traefik Demo - Static Site</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .endpoints {
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .endpoint {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 3px;
+        }
+        .endpoint a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .endpoint a:hover {
+            text-decoration: underline;
+        }
+        .description {
+            color: #666;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Traefik Demo!</h1>
+        <p>This is a static website served through Traefik reverse proxy.</p>
+
+        <h2>Available Applications</h2>
+        <div class="endpoints">
+            <div class="endpoint">
+                <a href="http://flask.localhost">http://flask.localhost</a>
+                <div class="description">Flask API - Python backend with REST endpoints</div>
+            </div>
+            <div class="endpoint">
+                <a href="http://flask.localhost/api/users">http://flask.localhost/api/users</a>
+                <div class="description">Get list of users from Flask API</div>
+            </div>
+            <div class="endpoint">
+                <a href="http://nodejs.localhost">http://nodejs.localhost</a>
+                <div class="description">Node.js API - Express backend</div>
+            </div>
+            <div class="endpoint">
+                <a href="http://nodejs.localhost/api/products">http://nodejs.localhost/api/products</a>
+                <div class="description">Get list of products from Node.js API</div>
+            </div>
+            <div class="endpoint">
+                <a href="http://static.localhost">http://static.localhost</a>
+                <div class="description">This static website</div>
+            </div>
+            <div class="endpoint">
+                <a href="http://localhost:8080">http://localhost:8080</a>
+                <div class="description">Traefik Dashboard - Monitor your services</div>
+            </div>
+        </div>
+
+        <h2>About Traefik</h2>
+        <p>Traefik is a modern reverse proxy and load balancer that makes deploying microservices easy.
+           It automatically discovers services and routes traffic to them based on configured rules.</p>
+    </div>
+</body>
+</html>
