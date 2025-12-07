@@ -9,7 +9,7 @@ Traefik is a modern HTTP reverse proxy and load balancer that makes deploying mi
 ## Project Structure
 
 ```
-traefik/
+textbook-infra-traefik/
 ├── app1-flask/          # Python Flask API
 │   ├── app.py
 │   ├── requirements.txt
@@ -44,7 +44,7 @@ traefik/
 Navigate to the project directory and run:
 
 ```bash
-cd E:\dev\zed_projects\learning\traefik
+cd xxx\textbook-infra-traefik
 docker-compose up -d --build
 ```
 
