@@ -10,7 +10,7 @@ Get up and running with Traefik in under 5 minutes!
 ## Step 1: Navigate to Project
 
 ```bash
-cd E:\dev\zed_projects\learning\traefik
+cd xxx\learning\traefik
 ```
 
 ## Step 2: Start Everything
