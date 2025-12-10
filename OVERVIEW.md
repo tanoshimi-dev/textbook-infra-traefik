@@ -42,7 +42,7 @@ traefik/
 1. Read **[QUICK-START.md](QUICK-START.md)**
 2. Run the basic demo:
    ```bash
-   cd E:\dev\zed_projects\learning\traefik
+   cd xxx\learning\traefik
    docker-compose up -d --build
    ```
 3. Visit http://localhost:8080 to see Traefik dashboard
