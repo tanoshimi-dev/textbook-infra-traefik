@@ -1,26 +1,26 @@
+version: "3.8"
+
 services:
     traefik:
-        image: traefik:v2.11
+        image: traefik:v2.10
         container_name: traefik
         command:
             - "--api.insecure=true"
-            - "--api.dashboard=true"
             - "--providers.docker=true"
             - "--providers.docker.exposedbydefault=false"
-            - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-            - "--providers.docker.network=traefik-network"
             - "--entrypoints.web.address=:80"
-            - "--log.level=INFO"
         ports:
             - "80:80"
             - "8080:8080"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock:ro
-        environment:
-            - DOCKER_API_VERSION=1.44
+            - ./traefik.yml:/etc/traefik/traefik.yml:ro
+            - ./dynamic-config.yml:/etc/traefik/dynamic-config.yml:ro
         networks:
             - traefik-network
         restart: unless-stopped
+        group_add:
+            - "1001"
 
     flask-app:
         build: ./app1-flask
@@ -57,6 +57,22 @@ services:
         networks:
             - traefik-network
         restart: unless-stopped
+
+    laravel-app:
+        build: ./app11-laravel
+        container_name: laravel-app
+        ports:
+            - "8000:80"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.laravel.rule=Host(`laravel.localhost`)"
+            - "traefik.http.routers.laravel.entrypoints=web"
+            - "traefik.http.services.laravel.loadbalancer.server.port=80"
+        networks:
+            - traefik-network
+        restart: unless-stopped
+        volumes:
+            - ./app11-laravel:/var/www
 
 networks:
     traefik-network:
