@@ -21,6 +21,9 @@ textbook-infra-traefik/
 ├── app3-static/         # Static HTML site with Nginx
 │   ├── index.html
 │   └── Dockerfile
+├── app11-laravel/       # PHP Laravel API
+│   ├── index.html
+│   └── Dockerfile
 ├── traefik.yml          # Traefik configuration
 ├── docker-compose.yml   # Docker Compose configuration
 └── README.md
