@@ -1,16 +1,19 @@
 api:
-  dashboard: true
-  insecure: true
+    dashboard: true
+    insecure: true
 
 entryPoints:
-  web:
-    address: ":80"
+    web:
+        address: ":80"
 
 providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
-    network: traefik-network
+    docker:
+        endpoint: "unix:///var/run/docker.sock"
+        exposedByDefault: false
+        network: traefik-network
+    file:
+        filename: /etc/traefik/dynamic-config.yml
+        watch: true
 
 log:
-  level: INFO
+    level: INFO

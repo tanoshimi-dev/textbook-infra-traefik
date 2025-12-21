@@ -1,0 +1,46 @@
+http:
+    routers:
+        laravel-manual:
+            rule: "Host(`laravel.localhost`)"
+            service: laravel-service
+            entryPoints:
+                - web
+
+        flask-manual:
+            rule: "Host(`flask.localhost`)"
+            service: flask-service
+            entryPoints:
+                - web
+
+        nodejs-manual:
+            rule: "Host(`nodejs.localhost`)"
+            service: nodejs-service
+            entryPoints:
+                - web
+
+        static-manual:
+            rule: "Host(`static.localhost`)"
+            service: static-service
+            entryPoints:
+                - web
+
+    services:
+        laravel-service:
+            loadBalancer:
+                servers:
+                    - url: "http://laravel-app:80"
+
+        flask-service:
+            loadBalancer:
+                servers:
+                    - url: "http://flask-app:5000"
+
+        nodejs-service:
+            loadBalancer:
+                servers:
+                    - url: "http://nodejs-app:3000"
+
+        static-service:
+            loadBalancer:
+                servers:
+                    - url: "http://static-app:80"
