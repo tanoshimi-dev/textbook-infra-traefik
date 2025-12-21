@@ -1,60 +1,63 @@
-version: '3.8'
-
 services:
-  traefik:
-    image: traefik:v2.10
-    container_name: traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-    networks:
-      - traefik-network
-    restart: unless-stopped
+    traefik:
+        image: traefik:v2.11
+        container_name: traefik
+        command:
+            - "--api.insecure=true"
+            - "--api.dashboard=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+            - "--providers.docker.network=traefik-network"
+            - "--entrypoints.web.address=:80"
+            - "--log.level=INFO"
+        ports:
+            - "80:80"
+            - "8080:8080"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        environment:
+            - DOCKER_API_VERSION=1.44
+        networks:
+            - traefik-network
+        restart: unless-stopped
 
-  flask-app:
-    build: ./app1-flask
-    container_name: flask-app
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
-      - "traefik.http.routers.flask.entrypoints=web"
-      - "traefik.http.services.flask.loadbalancer.server.port=5000"
-    networks:
-      - traefik-network
-    restart: unless-stopped
+    flask-app:
+        build: ./app1-flask
+        container_name: flask-app
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
+            - "traefik.http.routers.flask.entrypoints=web"
+            - "traefik.http.services.flask.loadbalancer.server.port=5000"
+        networks:
+            - traefik-network
+        restart: unless-stopped
 
-  nodejs-app:
-    build: ./app2-nodejs
-    container_name: nodejs-app
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.nodejs.rule=Host(`nodejs.localhost`)"
-      - "traefik.http.routers.nodejs.entrypoints=web"
-      - "traefik.http.services.nodejs.loadbalancer.server.port=3000"
-    networks:
-      - traefik-network
-    restart: unless-stopped
+    nodejs-app:
+        build: ./app2-nodejs
+        container_name: nodejs-app
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.nodejs.rule=Host(`nodejs.localhost`)"
+            - "traefik.http.routers.nodejs.entrypoints=web"
+            - "traefik.http.services.nodejs.loadbalancer.server.port=3000"
+        networks:
+            - traefik-network
+        restart: unless-stopped
 
-  static-app:
-    build: ./app3-static
-    container_name: static-app
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.static.rule=Host(`static.localhost`)"
-      - "traefik.http.routers.static.entrypoints=web"
-      - "traefik.http.services.static.loadbalancer.server.port=80"
-    networks:
-      - traefik-network
-    restart: unless-stopped
+    static-app:
+        build: ./app3-static
+        container_name: static-app
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.static.rule=Host(`static.localhost`)"
+            - "traefik.http.routers.static.entrypoints=web"
+            - "traefik.http.services.static.loadbalancer.server.port=80"
+        networks:
+            - traefik-network
+        restart: unless-stopped
 
 networks:
-  traefik-network:
-    driver: bridge
+    traefik-network:
+        driver: bridge
